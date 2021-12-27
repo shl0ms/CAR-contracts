@@ -24,6 +24,10 @@ task('blockNumber', 'Prints the current block number', async (_, {ethers}) => {
     })
 })
 
+const NODE_API_KEY = process.env.NODE_API_KEY
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+const MNEMONIC = process.env.MNEMONIC
+
 /*
  * You need to export an object to set up your config
  * Go to https://hardhat.org/config/ to learn more
@@ -33,15 +37,73 @@ task('blockNumber', 'Prints the current block number', async (_, {ethers}) => {
 export default {
     networks: {
         hardhat: {
-            chainId: 33133,
-            allowUnlimitedContractSize: true,
+            forking: {
+                url: NODE_API_KEY,
+                blockNumber: 13600000
+            },
+            accounts: [
+                {
+                    privateKey:
+                        '0xf269c6517520b4435128014f9c1e50c1c498374a7f5143f035bfb32153f3adab',
+                    balance: '100000000000000000000000000000000'
+                },
+                {
+                    privateKey:
+                        '0xca3547a47684862274b476b689f951fad53219fbde79f66c9394e30f1f0b4904',
+                    balance: '100000000000000000000000000000000'
+                },
+                {
+                    privateKey:
+                        '0x4bad9ef34aa208258e3d5723700f38a7e10a6bca6af78398da61e534be792ea8',
+                    balance: '100000000000000000000000000000000'
+                },
+                {
+                    privateKey:
+                        '0xffc03a3bd5f36131164ad24616d6cde59a0cfef48235dd8b06529fc0e7d91f7c',
+                    balance: '100000000000000000000000000000000'
+                },
+                {
+                    privateKey:
+                        '0x380c430a9b8fa9cce5524626d25a942fab0f26801d30bfd41d752be9ba74bd98',
+                    balance: '100000000000000000000000000000000'
+                },
+                {
+                    privateKey:
+                        '0x76e84d048ab2f7e50865817dda3eef706aaeeeb592c1e0a2d677e914bda4e9d6',
+                    balance: '100000000000000000000000000000000'
+                },
+                {
+                    privateKey:
+                        '0x11382902ecfbd88082b97693bd0ca5e1d9b273b50ae9626f6fa1f643be175d0b',
+                    balance: '100000000000000000000000000000000'
+                }
+            ],
+            allowUnlimitedContractSize: false,
+            blockGasLimit: 40000000,
+            gas: 40000000,
+            gasPrice: 'auto',
             loggingEnabled: false
         },
-        local: {
-            url: 'http://localhost:8545',
-            chainId: 33133,
-            allowUnlimitedContractSize: true,
-            loggingEnabled: true
+        development: {
+            url: 'http://127.0.0.1:8545',
+            gas: 12400000,
+            timeout: 1000000
+        },
+        ropsten: {
+            url: NODE_API_KEY,
+            accounts: [MNEMONIC]
+        },
+        rinkeby: {
+            url: NODE_API_KEY,
+            accounts: [MNEMONIC]
+        },
+        mainnet: {
+            url: NODE_API_KEY,
+            accounts: [MNEMONIC]
+        },
+        kovan: {
+            url: NODE_API_KEY,
+            accounts: [MNEMONIC]
         }
     },
     solidity: {
@@ -59,5 +121,11 @@ export default {
                 version: '0.8.4'
             }
         ]
+    },
+    mocha: {
+        timeout: 500000
+    },
+    etherscan: {
+        apiKey: ETHERSCAN_API_KEY
     }
 }
