@@ -14,12 +14,17 @@ interface IERC721 {
 contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    uint256 public constant MAX_EXTENSION = 600;
+
     address public beneficiaryAddress;
     uint256 public startTime;
     uint256 public endTime;
     uint256 public items;
+    bool public extended;
     IERC20Upgradeable public weth;
     IERC721 public NFT;
+
+    event Extended(uint256 endTime_);
 
     constructor(
         uint256 startTime_,
@@ -44,6 +49,18 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
     function setWeth(IERC20Upgradeable weth_) external onlyOwner {
         weth = weth_;
+    }
+
+    function extend(uint256 endTime_) external onlyOwner {
+        require(!extended, "Auction was extended");
+        require(block.timestamp < endTime, "Can't extended after ending");
+        require(
+            endTime_ >= endTime && endTime_ - endTime <= MAX_EXTENSION,
+            "New ending doesn't satisfy"
+        );
+        endTime = endTime_;
+        extended = true;
+        emit Extended(endTime_);
     }
 
     function selectWinners(

@@ -5,7 +5,7 @@ import '@nomiclabs/hardhat-ethers'
 
 import chai, {expect} from 'chai'
 import {before} from 'mocha'
-import {ethers, BigNumber} from 'ethers'
+import {ethers} from 'ethers'
 import {solidity} from 'ethereum-waffle'
 import {Auction, MockWETH, MockNFT} from '../typechain'
 import {deployContract, signer} from './framework/contracts'
@@ -46,10 +46,6 @@ describe('Auction', () => {
         )
         await nft.addMinter(auction.address)
 
-        const amountBytes = ethers.utils.defaultAbiCoder.encode(
-            ['uint256'],
-            [AMOUNT]
-        )
         const msg = ethers.utils.arrayify(
             ethers.utils.solidityKeccak256(['uint256'], [AMOUNT])
         )
