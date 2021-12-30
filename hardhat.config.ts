@@ -41,6 +41,7 @@ export default {
                 url: NODE_API_KEY,
                 blockNumber: 13600000
             },
+            chainId: 1,
             accounts: [
                 {
                     privateKey:

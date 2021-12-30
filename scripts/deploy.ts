@@ -1,6 +1,6 @@
 import {run, ethers} from 'hardhat'
 import {log} from '../config/logging'
-import {MockWETH, WindrangerAuction} from '../typechain'
+import {MockWETH, Auction} from '../typechain'
 
 async function main() {
     await run('compile')
@@ -18,9 +18,9 @@ async function main() {
 
     log.info('WETH: ', weth.address)
 
-    const Auction = await ethers.getContractFactory('WindrangerAuction')
-    const auction = <WindrangerAuction>(
-        await Auction.deploy(accounts[0].address, weth.address)
+    const AuctionFactory = await ethers.getContractFactory('Auction')
+    const auction = <Auction>(
+        await AuctionFactory.deploy(accounts[0].address, weth.address)
     )
     await auction.deployed()
 

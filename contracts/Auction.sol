@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -10,134 +11,80 @@ interface IERC721 {
     function mint(address to, uint256 id) external;
 }
 
-contract WindrangerAuction is
-    Initializable,
-    OwnableUpgradeable,
-    PausableUpgradeable
-{
+contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    struct Auction {
-        uint256 start;
-        uint256 end;
-        uint256 items;
-        IERC721 NFT;
-    }
+    address public beneficiaryAddress;
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 public items;
+    IERC20Upgradeable public weth;
+    IERC721 public NFT;
 
-    address payable private _beneficiaryAddress;
-    IERC20Upgradeable private _weth;
-    mapping(uint256 => Auction) private _auctions;
-
-    event AuctionCreated(
-        uint256 auctionID,
-        uint256 startTime,
-        uint256 endTime,
-        IERC721 NFT,
-        uint256 items
-    );
-    event WinnersSelected(uint256 auctionID);
-
-    modifier whenAuctionEnded(uint256 auctionID) {
-        require(
-            block.timestamp > _auctions[auctionID].end,
-            "Auction hasn't ended"
-        );
-        _;
-    }
-
-    constructor(address payable beneficiaryAddress, IERC20Upgradeable weth)
-        initializer
-    {
+    constructor(
+        uint256 startTime_,
+        uint256 endTime_,
+        IERC721 NFT_,
+        uint256 items_,
+        IERC20Upgradeable weth_
+    ) initializer {
         __Ownable_init();
         __Pausable_init();
-        _beneficiaryAddress = beneficiaryAddress;
-        _weth = weth;
+        beneficiaryAddress = _msgSender();
+        weth = weth_;
+        startTime = startTime_;
+        endTime = endTime_;
+        items = items_;
+        NFT = NFT_;
     }
 
-    function pause() external onlyOwner {
-        _pause();
+    function setBeneficiary(address beneficiaryAddress_) external onlyOwner {
+        beneficiaryAddress = beneficiaryAddress_;
     }
 
-    function unpause() external onlyOwner {
-        _unpause();
-    }
-
-    function setBeneficiary(address payable beneficiaryAddress)
-        external
-        onlyOwner
-    {
-        _beneficiaryAddress = beneficiaryAddress;
-    }
-
-    function setWeth(IERC20Upgradeable weth) external onlyOwner {
-        _weth = weth;
-    }
-
-    function createAuction(
-        uint256 auctionID,
-        uint256 startTime,
-        uint256 endTime,
-        IERC721 NFT,
-        uint256 items
-    ) external onlyOwner {
-        require(
-            startTime > block.timestamp && startTime < endTime,
-            "Incorrect time range"
-        );
-        Auction memory auction = Auction(startTime, endTime, items, NFT);
-        _auctions[auctionID] = Auction(startTime, endTime, items, NFT);
-        emit AuctionCreated(auctionID, startTime, endTime, NFT, items);
+    function setWeth(IERC20Upgradeable weth_) external onlyOwner {
+        weth = weth_;
     }
 
     function selectWinners(
-        uint256 auctionID,
         address[] calldata bidders,
-        uint256[] calldata ids
-    ) external onlyOwner whenAuctionEnded(auctionID) {
+        uint256[] calldata bids,
+        bytes32[] calldata sigsR,
+        bytes32[] calldata sigsS,
+        uint8[] calldata sigsV,
+        uint256[] memory ids
+    ) external onlyOwner {
+        require(block.timestamp > endTime, "Auction hasn't ended");
+        require(bidders.length <= items, "Too much winners");
         require(
-            bidders.length <= _auctions[auctionID].items,
-            "Too much winners"
+            bidders.length == ids.length && bidders.length == bids.length,
+            "Incorrect number of ids"
         );
         require(
-            bidders.length <= _auctions[auctionID].items,
-            "Not equal ids and bidders"
+            bidders.length == sigsV.length &&
+                sigsV.length == sigsR.length &&
+                sigsV.length == sigsR.length,
+            "Incorrect number of signatures"
         );
         for (uint256 i = 0; i < bidders.length; i++) {
-            _weth.safeTransferFrom(
-                bidders[i],
-                address(this),
-                _weth.allowance(bidders[i], address(this))
+            require(
+                ecrecover(
+                    keccak256(
+                        abi.encodePacked(
+                            "\x19Ethereum Signed Message:\n32",
+                            keccak256(abi.encodePacked(bids[i]))
+                        )
+                    ),
+                    sigsV[i],
+                    sigsR[i],
+                    sigsS[i]
+                ) == bidders[i],
+                "Incorrect signature"
             );
-            _auctions[auctionID].NFT.mint(bidders[i], ids[i]);
+            weth.safeTransferFrom(bidders[i], beneficiaryAddress, bids[i]);
+            NFT.mint(bidders[i], ids[i]);
         }
-        _auctions[auctionID].items -= bidders.length;
-        emit WinnersSelected(auctionID);
-    }
-
-    function beneficiaryAddress() external view returns (address) {
-        return _beneficiaryAddress;
-    }
-
-    function weth() external view returns (IERC20Upgradeable) {
-        return _weth;
-    }
-
-    function auction(uint256 auctionID)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            IERC721
-        )
-    {
-        return (
-            _auctions[auctionID].start,
-            _auctions[auctionID].end,
-            _auctions[auctionID].items,
-            _auctions[auctionID].NFT
-        );
+        items -= bidders.length;
     }
 
     receive() external payable {}

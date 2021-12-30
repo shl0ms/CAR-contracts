@@ -5,72 +5,93 @@ import '@nomiclabs/hardhat-ethers'
 
 import chai, {expect} from 'chai'
 import {before} from 'mocha'
+import {ethers, BigNumber} from 'ethers'
 import {solidity} from 'ethereum-waffle'
-import {WindrangerAuction, MockWETH, MockNFT} from '../typechain'
+import {Auction, MockWETH, MockNFT} from '../typechain'
 import {deployContract, signer} from './framework/contracts'
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers'
 import {successfulTransaction} from './framework/transaction'
 import {advanceBlockTo, getTimestamp, getBlock} from './framework/time'
-import {verifyWinnersSelectedEvent} from './contracts/verify-auction-events'
 
 // Wires up Waffle with Chai
 chai.use(solidity)
 
 const AMOUNT = '90000000000000000000000000000000'
+const ITEMS = 3
 
 describe('Auction', () => {
     before(async () => {
         admin = await signer(0)
-        bidder1 = await signer(1)
-        bidder2 = await signer(2)
-        bidder3 = await signer(3)
+        bidders = []
+        for (let i = 0; i < ITEMS; ++i) {
+            bidders.push(await signer(i + 1))
+        }
         nft = await deployContract<MockNFT>('MockNFT')
         weth = await deployContract<MockWETH>('MockWETH')
-        auction = await deployContract<WindrangerAuction>(
-            'WindrangerAuction',
-            admin.address,
-            weth.address
-        )
-        await nft.addMinter(auction.address)
-        await weth.connect(bidder1).deposit({value: AMOUNT})
-        await weth.connect(bidder2).deposit({value: AMOUNT})
-        await weth.connect(bidder3).deposit({value: AMOUNT})
+        for (let i = 0; i < ITEMS; ++i) {
+            await weth.connect(bidders[i]).deposit({value: AMOUNT})
+        }
     })
 
     it('Run auction', async () => {
-        const start = (await getTimestamp()) + 2
-        const end = (await getTimestamp()) + 10
-        const items = 3
-        let receipt = await successfulTransaction(
-            auction.createAuction('1', start, end, nft.address, items)
+        const start = (await getTimestamp()) + 3
+        const end = (await getTimestamp()) + 11
+        auction = await deployContract<Auction>(
+            'Auction',
+            start,
+            end,
+            nft.address,
+            ITEMS,
+            weth.address
+        )
+        await nft.addMinter(auction.address)
+
+        const amountBytes = ethers.utils.defaultAbiCoder.encode(
+            ['uint256'],
+            [AMOUNT]
+        )
+        const msg = ethers.utils.arrayify(
+            ethers.utils.solidityKeccak256(['uint256'], [AMOUNT])
         )
 
-        await weth.connect(bidder1).approve(auction.address, AMOUNT)
-        await weth.connect(bidder2).approve(auction.address, AMOUNT)
-        await weth.connect(bidder3).approve(auction.address, AMOUNT)
+        const sigsR = []
+        const sigsS = []
+        const sigsV = []
+
+        for (let i = 0; i < ITEMS; ++i) {
+            await weth.connect(bidders[i]).approve(auction.address, AMOUNT)
+            const rawSignature = await bidders[i].signMessage(msg)
+            const signature = ethers.utils.splitSignature(rawSignature)
+
+            sigsR.push(signature.r)
+            sigsS.push(signature.s)
+            sigsV.push(signature.v)
+        }
 
         await advanceBlockTo((await getBlock()) + 8)
 
-        receipt = await successfulTransaction(
-            auction.selectWinners(
-                '1',
-                [bidder1.address, bidder2.address, bidder3.address],
-                ['1', '2', '3']
-            )
+        const bids = []
+        const ids = []
+        const biddersAddrs = []
+
+        for (let i = 0; i < ITEMS; ++i) {
+            bids.push(AMOUNT)
+            ids.push(i + 1)
+            biddersAddrs.push(bidders[i].address)
+        }
+
+        await successfulTransaction(
+            auction.selectWinners(biddersAddrs, bids, sigsR, sigsS, sigsV, ids)
         )
 
-        verifyWinnersSelectedEvent(receipt, '1')
-
-        expect(await nft.ownerOf('1')).equals(bidder1.address)
-        expect(await nft.ownerOf('2')).equals(bidder2.address)
-        expect(await nft.ownerOf('3')).equals(bidder3.address)
+        for (let i = 0; i < ITEMS; ++i) {
+            expect(await nft.ownerOf(i + 1)).equals(bidders[i].address)
+        }
     })
 
     let admin: SignerWithAddress
-    let bidder1: SignerWithAddress
-    let bidder2: SignerWithAddress
-    let bidder3: SignerWithAddress
-    let auction: WindrangerAuction
+    let bidders: SignerWithAddress[]
+    let auction: Auction
     let weth: MockWETH
     let nft: MockNFT
 })
