@@ -16,6 +16,8 @@
   "scripts": {
     "build": "hardhat compile",
     "clean": "hardhat clean",
+    "deploy-ropsten": "hardhat scripts/deploy.ts --network ropsten",
+    "deploy-mainnet": "hardhat scripts/deploy.ts --network mainnet",
     "format": "npm run format-ts && npm run format-sol",
     "format-ts": "prettier '**/*.ts' --write",
     "format-sol": "prettier '**/*.sol' --write",
