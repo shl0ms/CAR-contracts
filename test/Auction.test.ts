@@ -34,12 +34,8 @@ describe('Auction', () => {
     })
 
     it('Run auction', async () => {
-        const start = (await getTimestamp()) + 3
-        const end = (await getTimestamp()) + 11
         auction = await deployContract<Auction>(
             'Auction',
-            start,
-            end,
             nft.address,
             ITEMS,
             weth.address
@@ -63,8 +59,6 @@ describe('Auction', () => {
             sigsS.push(signature.s)
             sigsV.push(signature.v)
         }
-
-        await advanceBlockTo((await getBlock()) + 8)
 
         const bids = []
         const ids = []

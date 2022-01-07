@@ -22,18 +22,10 @@ async function main() {
     await nft.deployed()
     log.info('NFT: ', nft.address)
 
-    const START = 1641228000
-    const END = 1641230000
     const ITEMS = 1000
     const AuctionFactory = await ethers.getContractFactory('Auction')
     const auction = <Auction>(
-        await AuctionFactory.deploy(
-            START,
-            END,
-            nft.address,
-            ITEMS,
-            weth.address
-        )
+        await AuctionFactory.deploy(nft.address, ITEMS, weth.address)
     )
     await auction.deployed()
     await nft.addMinter(auction.address)
