@@ -50,7 +50,7 @@ contract TimelockedERC721 is
     }
 
     modifier tokenLocked(uint256 tokenId_) {
-        if (lockedTokens[tokenId_] == true) {
+        if (lockedTokens[tokenId_]) {
             if (block.timestamp >= tokenUnlockTimestamp) {
                 // unlock tokens if we are at or past the unlock timestamp
                 lockedTokens[tokenId_] = false;
@@ -67,7 +67,7 @@ contract TimelockedERC721 is
         string memory symbol,
         string memory baseTokenURI,
         uint256 unlockTimestamp
-    ) public virtual initializer futureTimestamp(unlockTimestamp) {
+    ) external virtual initializer futureTimestamp(unlockTimestamp) {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
@@ -107,7 +107,7 @@ contract TimelockedERC721 is
 
     function lockToken(uint256 tokenId) external {
         require(ownerOf(tokenId) == _msgSender(), "token not owned!");
-        require(lockedTokens[tokenId] == false, "token already locked!");
+        require(!lockedTokens[tokenId], "token already locked!");
         lockedTokens[tokenId] = true;
         emit TokenLocked(_msgSender(), tokenId);
     }
