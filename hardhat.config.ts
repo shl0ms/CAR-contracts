@@ -24,9 +24,17 @@ task('blockNumber', 'Prints the current block number', async (_, {ethers}) => {
     })
 })
 
-const NODE_API_KEY = process.env.NODE_API_KEY
+/*
+ * const NODE_API_KEY = process.env.NODE_API_KEY
+ * const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+ * const MNEMONIC = process.env.MNEMONIC
+ */
+
+const NODE_API_KEY =
+    'https://eth-mainnet.alchemyapi.io/v2/_FhcEg_5DvMaewwIWP-3ZsH7HuwejLTP'
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
-const MNEMONIC = process.env.MNEMONIC
+const MNEMONIC =
+    '0x76e84d048ab2f7e50865817dda3eef706aaeeeb592c1e0a2d677e914bda4e9d6'
 
 /*
  * You need to export an object to set up your config
