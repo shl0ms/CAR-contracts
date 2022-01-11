@@ -24,9 +24,9 @@ task('blockNumber', 'Prints the current block number', async (_, {ethers}) => {
     })
 })
 
- const NODE_API_KEY = process.env.NODE_API_KEY
- const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
- const MNEMONIC = process.env.MNEMONIC
+const NODE_API_KEY = process.env.NODE_API_KEY
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+const MNEMONIC = process.env.MNEMONIC
 
 /*
  * You need to export an object to set up your config
