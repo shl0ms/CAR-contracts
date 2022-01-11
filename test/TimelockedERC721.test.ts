@@ -10,7 +10,6 @@ import {solidity} from 'ethereum-waffle'
 import {TimelockedERC721} from '../typechain'
 import {deployContract, signer} from './framework/contracts'
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers'
-import {successfulTransaction} from './framework/transaction'
 import {setNextBlockTimestamp, getTimestamp} from './framework/time'
 
 // Wires up Waffle with Chai
