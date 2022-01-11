@@ -74,6 +74,10 @@ export async function advanceTime(time: BN) {
     await provider.send('evm_increaseTime', [time])
 }
 
+export async function setNextBlockTimestamp(time: BN) {
+    await provider.send('evm_setNextBlockTimestamp', [time.toNumber()])
+}
+
 export const duration = {
     seconds: function (val: number) {
         return BN.from(val)
