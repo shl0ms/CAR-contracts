@@ -11,30 +11,47 @@ import "./interfaces/IERC721.sol";
 contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    address public beneficiaryAddress;
+    address public beneficiary;
+    address public operator;
     uint256 public items;
     IERC20Upgradeable public weth;
     IERC721 public NFT;
 
+    modifier onlyOperator() {
+        require(_msgSender() == operator, "Must be the operator");
+        _;
+    }
+
     constructor(
         IERC721 NFT_,
         uint256 items_,
-        IERC20Upgradeable weth_
+        IERC20Upgradeable weth_,
+        address beneficiary_,
+        address operator_
     ) initializer {
         __Ownable_init();
         __Pausable_init();
-        beneficiaryAddress = _msgSender();
-        weth = weth_;
-        items = items_;
         NFT = NFT_;
+        items = items_;
+        weth = weth_;
+        beneficiary = beneficiary_;
+        operator = operator_;
     }
 
-    function setBeneficiary(address beneficiaryAddress_) external onlyOwner {
-        beneficiaryAddress = beneficiaryAddress_;
+    function setBeneficiary(address beneficiary_) external onlyOwner {
+        beneficiary = beneficiary_;
+    }
+
+    function setOperator(address operator_) external onlyOwner {
+        operator = operator_;
     }
 
     function setWeth(IERC20Upgradeable weth_) external onlyOwner {
         weth = weth_;
+    }
+
+    function setNFT(IERC721 NFT_) external onlyOwner {
+        NFT = NFT_;
     }
 
     function selectWinners(
@@ -42,9 +59,9 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         uint256[] calldata bids,
         bytes32[] calldata sigsR,
         bytes32[] calldata sigsS,
-        uint8[] calldata sigsV,
+        uint8[] memory sigsV,
         uint256[] memory ids
-    ) external onlyOwner {
+    ) external onlyOperator returns (uint256) {
         require(bidders.length <= items, "Too much winners");
         require(
             bidders.length == ids.length && bidders.length == bids.length,
@@ -56,8 +73,9 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
                 sigsV.length == sigsR.length,
             "Incorrect number of signatures"
         );
+        uint256 minted = 0;
         for (uint256 i = 0; i < bidders.length; i++) {
-            require(
+            if (
                 ecrecover(
                     keccak256(
                         abi.encodePacked(
@@ -68,13 +86,22 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
                     sigsV[i],
                     sigsR[i],
                     sigsS[i]
-                ) == bidders[i],
-                "Incorrect signature"
-            );
-            weth.safeTransferFrom(bidders[i], beneficiaryAddress, bids[i]);
+                ) != bidders[i]
+            ) {
+                continue;
+            }
+            if (
+                weth.allowance(bidders[i], address(this)) < bids[i] ||
+                weth.balanceOf(bidders[i]) < bids[i]
+            ) {
+                continue;
+            }
+            weth.safeTransferFrom(bidders[i], beneficiary, bids[i]);
             NFT.mint(bidders[i], ids[i]);
+            minted++;
         }
-        items -= bidders.length;
+        items -= minted;
+        return minted;
     }
 
     receive() external payable {}
