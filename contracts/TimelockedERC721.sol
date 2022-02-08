@@ -116,6 +116,12 @@ contract TimelockedERC721 is
         super._mint(to_, id_);
     }
 
+    function batchMint(address to_, uint256[] memory ids_) external onlyMinter {
+        for (uint256 i = 0; i < ids_.length; i++) {
+            super._mint(to_, ids_[i]);
+        }
+    }
+
     function _beforeTokenTransfer(
         address from_,
         address to_,
