@@ -77,7 +77,7 @@ describe('Timelocked ERC721', () => {
 
     it('Should be able to batchMint to an addres', async () => {
         await timelockedERC721
-                .connect(users[1])
+                .connect(admin)
                 .batchMint(await users[1].getAddress(), [90,91,92])
         
         for (let i = 90; i < 92; ++i) {
