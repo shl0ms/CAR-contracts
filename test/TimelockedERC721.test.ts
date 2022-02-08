@@ -77,9 +77,9 @@ describe('Timelocked ERC721', () => {
 
     it('Should be able to batchMint to an addres', async () => {
         await timelockedERC721
-                .connect(admin)
-                .batchMint(await users[1].getAddress(), [90,91,92])
-        
+            .connect(admin)
+            .batchMint(await users[1].getAddress(), [90, 91, 92])
+
         for (let i = 90; i < 92; ++i) {
             expect(await timelockedERC721.ownerOf(i)).to.equal(
                 await users[1].getAddress()
@@ -99,7 +99,7 @@ describe('Timelocked ERC721', () => {
         await expect(
             timelockedERC721
                 .connect(users[1])
-                .batchMint(await users[1].getAddress(), [3,4,5])
+                .batchMint(await users[1].getAddress(), [3, 4, 5])
         ).to.be.revertedWith("Doesn't have minter role!")
     })
 
