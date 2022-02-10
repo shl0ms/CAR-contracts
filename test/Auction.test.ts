@@ -7,16 +7,14 @@ import chai, {expect} from 'chai'
 import {before} from 'mocha'
 import {ethers} from 'ethers'
 import {solidity} from 'ethereum-waffle'
-import {Auction, MockWETH, MockNFT} from '../typechain'
+import {Auction, MockWETH, TimelockedERC721} from '../typechain'
 import {deployContract, signer} from './framework/contracts'
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers'
 import {successfulTransaction} from './framework/transaction'
-import {advanceBlockTo, getTimestamp, getBlock} from './framework/time'
 
-// Wires up Waffle with Chai
 chai.use(solidity)
 
-const AMOUNT = '90000000000000000000000000000000'
+const AMOUNT = '100000000000000000'
 const ITEMS = 3
 
 describe('Auction', () => {
@@ -26,7 +24,8 @@ describe('Auction', () => {
         for (let i = 0; i < ITEMS; ++i) {
             bidders.push(await signer(i + 1))
         }
-        nft = await deployContract<MockNFT>('MockNFT')
+        nft = await deployContract<TimelockedERC721>('TimelockedERC721')
+        await nft.initialize('NFT', 'NFT', 'https', '1700000000')
         weth = await deployContract<MockWETH>('MockWETH')
         for (let i = 0; i < ITEMS; ++i) {
             await weth.connect(bidders[i]).deposit({value: AMOUNT})
@@ -34,11 +33,13 @@ describe('Auction', () => {
     })
 
     it('Run auction', async () => {
-        auction = await deployContract<Auction>(
-            'Auction',
+        auction = await deployContract<Auction>('Auction')
+        await auction.initialize(
             nft.address,
             ITEMS,
-            weth.address
+            weth.address,
+            admin.address,
+            admin.address
         )
         await nft.addMinter(auction.address)
 
@@ -61,17 +62,15 @@ describe('Auction', () => {
         }
 
         const bids = []
-        const ids = []
         const biddersAddrs = []
 
         for (let i = 0; i < ITEMS; ++i) {
             bids.push(AMOUNT)
-            ids.push(i + 1)
             biddersAddrs.push(bidders[i].address)
         }
 
         await successfulTransaction(
-            auction.selectWinners(biddersAddrs, bids, sigsR, sigsS, sigsV, ids)
+            auction.selectWinners(biddersAddrs, bids, sigsR, sigsS, sigsV, 1)
         )
 
         for (let i = 0; i < ITEMS; ++i) {
@@ -83,5 +82,5 @@ describe('Auction', () => {
     let bidders: SignerWithAddress[]
     let auction: Auction
     let weth: MockWETH
-    let nft: MockNFT
+    let nft: TimelockedERC721
 })

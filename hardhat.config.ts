@@ -50,7 +50,7 @@ export default {
                 },
                 {
                     privateKey:
-                        '0xca3547a47684862274b476b689f951fad53219fbde79f66c9394e30f1f0b4904',
+                        '0xbeada93954a2179c6c5ca0844cd72b923cad18cde32269485d35198483cf359c',
                     balance: '100000000000000000000000000000000'
                 },
                 {

@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "./interfaces/IERC721.sol";
 
 contract AuctionWithTime is
@@ -23,14 +22,14 @@ contract AuctionWithTime is
     uint256 public items;
     bool public extended;
     IERC20Upgradeable public weth;
-    IERC721 public NFT;
+    IERC721 public nft;
 
     event Extended(uint256 endTime_);
 
     constructor(
         uint256 startTime_,
         uint256 endTime_,
-        IERC721 NFT_,
+        IERC721 nft_,
         uint256 items_,
         IERC20Upgradeable weth_
     ) initializer {
@@ -41,7 +40,7 @@ contract AuctionWithTime is
         startTime = startTime_;
         endTime = endTime_;
         items = items_;
-        NFT = NFT_;
+        nft = nft_;
     }
 
     function setBeneficiary(address beneficiaryAddress_) external onlyOwner {
@@ -100,7 +99,7 @@ contract AuctionWithTime is
                 "Incorrect signature"
             );
             weth.safeTransferFrom(bidders[i], beneficiaryAddress, bids[i]);
-            NFT.mint(bidders[i], ids[i]);
+            nft.mint(bidders[i], ids[i]);
         }
         items -= bidders.length;
     }

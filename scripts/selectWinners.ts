@@ -1,14 +1,11 @@
 import {run, ethers} from 'hardhat'
 import {BigNumber as BN} from 'ethers'
 import {log} from '../config/logging'
-import {MockWETH, MockNFT, Auction} from '../typechain'
+import {Auction} from '../typechain'
+import {readFileSync} from 'fs'
 
 async function main() {
     await run('compile')
-
-    if (!process.env.AUCTION || !process.env.WETH) {
-        throw Error('Unset ENV vars')
-    }
 
     const accounts = await ethers.getSigners()
 
@@ -17,51 +14,59 @@ async function main() {
         accounts.map((a) => a.address)
     )
 
-    const ITEMS = 6
-    const TOP = 5000
-
+    const MAX_WINNERS = 888
+    const GROUP_SIZE = 20
+    const AUCTION = process.env.AUCTION ? process.env.AUCTION : ''
     const AuctionFactory = await ethers.getContractFactory('Auction')
-    const WETH = await ethers.getContractFactory('MockWETH')
-    const auction = <Auction>AuctionFactory.attach(process.env.AUCTION)
-    const weth = <MockWETH>WETH.attach(process.env.WETH)
+    const auction = <Auction>AuctionFactory.attach(AUCTION)
+    const readWinners = readFileSync('winners.csv', 'utf-8')
+    const winners = readWinners.split('\n')
 
-    const sigsR = []
-    const sigsS = []
-    const sigsV = []
-    const bids = []
-    const ids = []
-    const bidders = []
-
-    for (let i = 1; i <= ITEMS; ++i) {
-        const amount = BN.from(TOP - i).toString()
-        await weth.connect(accounts[i]).deposit({value: amount})
-
-        bids.push(amount)
-        const msg = ethers.utils.arrayify(
-            ethers.utils.solidityKeccak256(['uint256'], [amount])
+    let curID = 1
+    let items = 888
+    let sum = BN.from(0)
+    for (
+        let i = 1;
+        i < winners.length && curID <= MAX_WINNERS;
+        i += GROUP_SIZE
+    ) {
+        const sigsR = []
+        const sigsS = []
+        const sigsV = []
+        const bids = []
+        const bidders = []
+        for (
+            let j = 0;
+            j < GROUP_SIZE &&
+            curID + j <= MAX_WINNERS &&
+            i + j < winners.length;
+            ++j
+        ) {
+            const params = winners[i + j].split('"').join('').split(',')
+            bids.push(params[1])
+            bidders.push(params[3])
+            const signature = ethers.utils.splitSignature(params[4])
+            sigsR.push(signature.r)
+            sigsS.push(signature.s)
+            sigsV.push(signature.v)
+        }
+        const tx = await auction.selectWinners(
+            bidders,
+            bids,
+            sigsR,
+            sigsS,
+            sigsV,
+            BN.from(curID)
         )
-        await weth.connect(accounts[i]).approve(auction.address, amount)
-        const rawSignature = await accounts[i].signMessage(msg)
-        const signature = ethers.utils.splitSignature(rawSignature)
-
-        sigsR.push(signature.r)
-        sigsS.push(signature.s)
-        sigsV.push(signature.v)
-        bidders.push(accounts[i].address)
-        ids.push(i + 1)
+        const receipt = await tx.wait()
+        // console.log(receipt)
+        const leftItems = await auction.items()
+        curID += items - leftItems.toNumber()
+        // console.log('LEFT ITEMS: ' + leftItems.toString())
+        items = leftItems.toNumber()
+        sum = sum.add(receipt.gasUsed)
     }
-
-    const tx = await auction.selectWinners(
-        bidders,
-        bids,
-        sigsR,
-        sigsS,
-        sigsV,
-        ids
-    )
-    const receipt = await tx.wait()
-    log.info('Receipt: ', receipt)
-    log.info('Auction: ', auction.address)
+    // console.log('Gas used: ', sum.toString())
 }
 
 main()
