@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "./interfaces/IERC721.sol";
 
 contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
@@ -22,13 +22,13 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         _;
     }
 
-    constructor(
+    function initialize(
         IERC721 NFT_,
         uint256 items_,
         IERC20Upgradeable weth_,
         address beneficiary_,
         address operator_
-    ) initializer {
+    ) external initializer {
         __Ownable_init();
         __Pausable_init();
         NFT = NFT_;
@@ -60,13 +60,10 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         bytes32[] calldata sigsR,
         bytes32[] calldata sigsS,
         uint8[] memory sigsV,
-        uint256[] memory ids
+        uint256 startID
     ) external onlyOperator returns (uint256) {
         require(bidders.length <= items, "Too much winners");
-        require(
-            bidders.length == ids.length && bidders.length == bids.length,
-            "Incorrect number of ids"
-        );
+        require(bidders.length == bids.length, "Incorrect number of bids");
         require(
             bidders.length == sigsV.length &&
                 sigsV.length == sigsR.length &&
@@ -97,7 +94,7 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
                 continue;
             }
             weth.safeTransferFrom(bidders[i], beneficiary, bids[i]);
-            NFT.mint(bidders[i], ids[i]);
+            NFT.mint(bidders[i], startID + minted);
             minted++;
         }
         items -= minted;
