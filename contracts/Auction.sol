@@ -15,7 +15,7 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     address public operator;
     uint256 public items;
     IERC20Upgradeable public weth;
-    IERC721 public NFT;
+    IERC721 public nft;
 
     modifier onlyOperator() {
         require(_msgSender() == operator, "Must be the operator");
@@ -23,7 +23,7 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     }
 
     function initialize(
-        IERC721 NFT_,
+        IERC721 nft_,
         uint256 items_,
         IERC20Upgradeable weth_,
         address beneficiary_,
@@ -31,7 +31,7 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     ) external initializer {
         __Ownable_init();
         __Pausable_init();
-        NFT = NFT_;
+        nft = nft_;
         items = items_;
         weth = weth_;
         beneficiary = beneficiary_;
@@ -50,8 +50,8 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         weth = weth_;
     }
 
-    function setNFT(IERC721 NFT_) external onlyOwner {
-        NFT = NFT_;
+    function setNFT(IERC721 nft_) external onlyOwner {
+        nft = nft_;
     }
 
     function selectWinners(
@@ -94,7 +94,7 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
                 continue;
             }
             weth.safeTransferFrom(bidders[i], beneficiary, bids[i]);
-            NFT.mint(bidders[i], startID + minted);
+            nft.mint(bidders[i], startID + minted);
             minted++;
         }
         items -= minted;
