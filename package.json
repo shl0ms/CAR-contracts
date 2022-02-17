@@ -21,16 +21,6 @@
     "deploy-mainnet": "npx hardhat run scripts/deploy.ts --network mainnet",
     "select-ropsten": "npx hardhat run scripts/selectWinners.ts --network ropsten",
     "select-mainnet": "npx hardhat run scripts/selectWinners.ts --network mainnet",
-    "make-bids": "npx hardhat run scripts/makeBids.ts --network ropsten",
-    "approve": "npx hardhat run scripts/approve.ts --network ropsten",
-    "send-weth": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "send-weth-1": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "send-weth-2": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "send-weth-3": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "send-weth-4": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "send-weth-5": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "send-weth-6": "npx hardhat run scripts/sendWETH.ts --network ropsten",
-    "select-mainnet": "npx hardhat run scripts/selectWinners.ts --network mainnet",
     "format": "npm run format-ts && npm run format-sol",
     "format-ts": "prettier '**/*.ts' --write",
     "format-sol": "prettier '**/*.sol' --write",
@@ -76,6 +66,7 @@
     "solhint": "^3.3.6",
     "ts-node": "^10.2.1",
     "typechain": "^5.1.2",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.4",
+    "dotenv": "^16.0.0"
   }
 }
