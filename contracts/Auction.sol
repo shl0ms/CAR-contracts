@@ -17,6 +17,8 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
     IERC20Upgradeable public weth;
     IERC721 public nft;
 
+    mapping(address => uint256) public used;
+
     modifier onlyOperator() {
         require(_msgSender() == operator, "Must be the operator");
         _;
@@ -72,12 +74,14 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         );
         uint256 minted = 0;
         for (uint256 i = 0; i < bidders.length; i++) {
+            require(used[bidders[i]] == 0, "Already used");
+            used[bidders[i]] = bids[i];
             if (
                 ecrecover(
                     keccak256(
                         abi.encodePacked(
-                            "\x19Ethereum Signed Message:\n32",
-                            keccak256(abi.encodePacked(bids[i]))
+                            "\x19Ethereum Signed Message:\n64",
+                            abi.encode(address(this), bids[i])
                         )
                     ),
                     sigsV[i],
