@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./interfaces/IERC721.sol";
 
-contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
+contract Auction is Initializable, OwnableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     address public beneficiary;
@@ -32,7 +31,6 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         address operator_
     ) external initializer {
         __Ownable_init();
-        __Pausable_init();
         nft = nft_;
         items = items_;
         weth = weth_;
@@ -69,7 +67,7 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         require(
             bidders.length == sigsV.length &&
                 sigsV.length == sigsR.length &&
-                sigsV.length == sigsR.length,
+                sigsV.length == sigsS.length,
             "Incorrect number of signatures"
         );
         uint256 minted = 0;
@@ -104,6 +102,4 @@ contract Auction is Initializable, OwnableUpgradeable, PausableUpgradeable {
         items -= minted;
         return minted;
     }
-
-    receive() external payable {}
 }
