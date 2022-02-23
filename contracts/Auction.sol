@@ -60,13 +60,15 @@ contract Auction is Initializable, OwnableUpgradeable, ERC712Domain {
     function selectWinners(
         address[] calldata bidders,
         uint256[] calldata bids,
-        bytes32[] calldata sigsR,
-        bytes32[] calldata sigsS,
+        bytes32[] calldata formattedAmountHashes,
+        bytes32[] memory sigsR,
+        bytes32[] memory sigsS,
         uint8[] memory sigsV,
         uint256 startID
     ) external onlyOperator returns (uint256) {
         require(bidders.length <= items, "Too much winners");
         require(bidders.length == bids.length, "Incorrect number of bids");
+        require(bidders.length == formattedAmountHashes.length, "Incorrect number of formatted amount hashes");
         require(
             bidders.length == sigsV.length &&
                 sigsV.length == sigsR.length &&
@@ -79,7 +81,7 @@ contract Auction is Initializable, OwnableUpgradeable, ERC712Domain {
             used[bidders[i]] = bids[i];
             if (
                 !erc712Verify(
-                    bidders[i], hashBid(bids[i]), sigsV[i], sigsR[i], sigsS[i]
+                    bidders[i], hashBid(bids[i], formattedAmountHashes[i]), sigsV[i], sigsR[i], sigsS[i]
                 )
             ) {
                 continue;
@@ -103,15 +105,16 @@ contract Auction is Initializable, OwnableUpgradeable, ERC712Domain {
     ));
 
     bytes32 constant BID_TYPEHASH = keccak256(bytes(
-        'Bid(uint256 amount,string contents,address tokenContract)'
+        'Bid(uint256 amount,string contents,address tokenContract,string formattedAmount)'
     ));
 
-    function hashBid(uint256 amount) public view returns (bytes32) {
+    function hashBid(uint256 amount, bytes32 formattedAmountHash) public view returns (bytes32) {
         return keccak256(abi.encode(
             BID_TYPEHASH,
             amount,
             BID_CONTENTS_HASH,
-            address(weth)
+            address(weth),
+            formattedAmountHash
         ));
     }
 }

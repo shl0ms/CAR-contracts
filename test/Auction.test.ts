@@ -15,6 +15,7 @@ import {successfulTransaction} from './framework/transaction'
 chai.use(solidity)
 
 const AMOUNT = '100000000000000000'
+const FORMATTED_AMOUNT = '0.1 ETH'
 const ITEMS = 3
 const CONTENTS =
     'Please sign to confirm your bid. The amounts are shown in WEI and ETH.'
@@ -56,7 +57,8 @@ describe('Auction', () => {
             Bid: [
                 {name: 'amount', type: 'uint256'},
                 {name: 'contents', type: 'string'},
-                {name: 'tokenContract', type: 'address'}
+                {name: 'tokenContract', type: 'address'},
+                {name: 'formattedAmount', type: 'string'}
             ]
         }
 
@@ -65,6 +67,7 @@ describe('Auction', () => {
         const sigsV = []
         const bids = []
         const biddersAddrs = []
+        const formattedAmountHashes = []
 
         for (let i = 0; i < ITEMS; ++i) {
             await weth.connect(bidders[i]).approve(auction.address, AMOUNT)
@@ -72,7 +75,8 @@ describe('Auction', () => {
             const msg = {
                 amount: AMOUNT,
                 contents: CONTENTS,
-                tokenContract: weth.address
+                tokenContract: weth.address,
+                formattedAmount: FORMATTED_AMOUNT
             }
 
             const rawSignature = await bidders[i]._signTypedData(
@@ -87,10 +91,23 @@ describe('Auction', () => {
             sigsS.push(s)
             bids.push(AMOUNT)
             biddersAddrs.push(bidders[i].address)
+            formattedAmountHashes.push(
+                ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(FORMATTED_AMOUNT)
+                )
+            )
         }
 
         await successfulTransaction(
-            auction.selectWinners(biddersAddrs, bids, sigsR, sigsS, sigsV, 1)
+            auction.selectWinners(
+                biddersAddrs,
+                bids,
+                formattedAmountHashes,
+                sigsR,
+                sigsS,
+                sigsV,
+                1
+            )
         )
 
         for (let i = 0; i < ITEMS; ++i) {
