@@ -3,6 +3,7 @@ import {network} from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
 // End - Support direct Mocha run & debug
 
+import 'hardhat-gas-reporter'
 import chai, {expect} from 'chai'
 import {before} from 'mocha'
 import {ethers} from 'ethers'
