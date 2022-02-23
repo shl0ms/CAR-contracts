@@ -32,7 +32,7 @@ contract Auction is Initializable, OwnableUpgradeable, ERC712Domain {
         address operator_
     ) external initializer {
         __Ownable_init();
-        __ERC712Domain_init('$CAR Auction', '1');
+        _erc712DomainInit('$CAR Auction', '1');
 
         nft = nft_;
         items = items_;
@@ -109,14 +109,8 @@ contract Auction is Initializable, OwnableUpgradeable, ERC712Domain {
     function hashBid(uint256 amount) public view returns (bytes32) {
         return keccak256(abi.encode(
             BID_TYPEHASH,
-
-            // Bind the bid amount
             amount,
-
-            // Bind the human-readable confirmation message
             BID_CONTENTS_HASH,
-
-            // Bind the token contract
             address(weth)
         ));
     }

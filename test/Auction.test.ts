@@ -1,12 +1,11 @@
 // Start - Support direct Mocha run & debug
-import 'hardhat'
-import {network} from "hardhat"
+import {network} from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
 // End - Support direct Mocha run & debug
 
 import chai, {expect} from 'chai'
 import {before} from 'mocha'
-import {ethers, BigNumber as BN} from 'ethers'
+import {ethers} from 'ethers'
 import {solidity} from 'ethereum-waffle'
 import {Auction, MockWETH, TimelockedERC721} from '../typechain'
 import {deployContract, signer} from './framework/contracts'

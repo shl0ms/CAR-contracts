@@ -11,30 +11,22 @@ abstract contract ERC712Domain {
         string version;
     }
 
-    bytes32 DOMAIN_HASH = 0x00;
+    bytes32 domainHash = 0x00;
 
-    function __ERC712Domain_init(string memory name,string memory version) internal {
-        require(DOMAIN_HASH == 0x00, 'ERC712Domain can only be initialized once');
+    function _erc712DomainInit(string memory name,string memory version) internal {
+        require(domainHash == 0x00, 'ERC712Domain can only be initialized once');
 
-        DOMAIN_HASH = keccak256(abi.encode(
+        domainHash = keccak256(abi.encode(
             DOMAIN_TYPEHASH,
-
-            // Bind this domain
             keccak256(bytes(name)),
-
-            // Bind this version
             keccak256(bytes(version)),
-
-            // Bind the chain
             block.chainid,
-
-            // Bind the contract
             address(this)
         ));
     }
 
     function erc712Hash(bytes32 msgHash) public view returns (bytes32) {
-        return keccak256(abi.encodePacked('\x19\x01', DOMAIN_HASH, msgHash));
+        return keccak256(abi.encodePacked('\x19\x01', domainHash, msgHash));
     }
 
     function erc712Verify(address signer, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public view returns (bool) {
