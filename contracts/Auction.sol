@@ -6,8 +6,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./interfaces/IERC721.sol";
+import "./ERC712Domain.sol";
 
-contract Auction is Initializable, OwnableUpgradeable {
+contract Auction is Initializable, OwnableUpgradeable, ERC712Domain {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     address public beneficiary;
@@ -31,6 +32,8 @@ contract Auction is Initializable, OwnableUpgradeable {
         address operator_
     ) external initializer {
         __Ownable_init();
+        __ERC712Domain_init('$CAR Auction', '1');
+
         nft = nft_;
         items = items_;
         weth = weth_;
@@ -75,17 +78,9 @@ contract Auction is Initializable, OwnableUpgradeable {
             require(used[bidders[i]] == 0, "Already used");
             used[bidders[i]] = bids[i];
             if (
-                ecrecover(
-                    keccak256(
-                        abi.encodePacked(
-                            "\x19Ethereum Signed Message:\n64",
-                            abi.encode(address(this), bids[i])
-                        )
-                    ),
-                    sigsV[i],
-                    sigsR[i],
-                    sigsS[i]
-                ) != bidders[i]
+                !erc712Verify(
+                    bidders[i], hashBid(bids[i]), sigsV[i], sigsR[i], sigsS[i]
+                )
             ) {
                 continue;
             }
@@ -101,5 +96,28 @@ contract Auction is Initializable, OwnableUpgradeable {
         }
         items -= minted;
         return minted;
+    }
+
+    bytes32 constant BID_CONTENTS_HASH = keccak256(bytes(
+        'Please sign to confirm your bid. The amounts are shown in WEI and ETH.'
+    ));
+
+    bytes32 constant BID_TYPEHASH = keccak256(bytes(
+        'Bid(uint256 amount,string contents,address tokenContract)'
+    ));
+
+    function hashBid(uint256 amount) public view returns (bytes32) {
+        return keccak256(abi.encode(
+            BID_TYPEHASH,
+
+            // Bind the bid amount
+            amount,
+
+            // Bind the human-readable confirmation message
+            BID_CONTENTS_HASH,
+
+            // Bind the token contract
+            address(weth)
+        ));
     }
 }

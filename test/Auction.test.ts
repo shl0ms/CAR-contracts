@@ -1,5 +1,6 @@
 // Start - Support direct Mocha run & debug
 import 'hardhat'
+import {network} from "hardhat"
 import '@nomiclabs/hardhat-ethers'
 // End - Support direct Mocha run & debug
 
@@ -16,6 +17,8 @@ chai.use(solidity)
 
 const AMOUNT = '100000000000000000'
 const ITEMS = 3
+const CONTENTS =
+    'Please sign to confirm your bid. The amounts are shown in WEI and ETH.'
 
 describe('Auction', () => {
     before(async () => {
@@ -43,30 +46,46 @@ describe('Auction', () => {
         )
         await nft.addMinter(auction.address)
 
-        const msg = ethers.utils.arrayify(
-            ethers.utils.defaultAbiCoder.encode(
-                ['address', 'uint256'],
-                [auction.address, AMOUNT]
-            )
-        )
+        const erc712Domain = {
+            name: '$CAR Auction',
+            version: '1',
+            chainId: network.config.chainId,
+            verifyingContract: auction.address
+        }
+
+        const erc712Types = {
+            Bid: [
+                {name: 'amount', type: 'uint256'},
+                {name: 'contents', type: 'string'},
+                {name: 'tokenContract', type: 'address'}
+            ]
+        }
+
         const sigsR = []
         const sigsS = []
         const sigsV = []
-
-        for (let i = 0; i < ITEMS; ++i) {
-            await weth.connect(bidders[i]).approve(auction.address, AMOUNT)
-            const rawSignature = await bidders[i].signMessage(msg)
-            const signature = ethers.utils.splitSignature(rawSignature)
-
-            sigsR.push(signature.r)
-            sigsS.push(signature.s)
-            sigsV.push(signature.v)
-        }
-
         const bids = []
         const biddersAddrs = []
 
         for (let i = 0; i < ITEMS; ++i) {
+            await weth.connect(bidders[i]).approve(auction.address, AMOUNT)
+
+            const msg = {
+                amount: AMOUNT,
+                contents: CONTENTS,
+                tokenContract: weth.address
+            }
+
+            const rawSignature = await bidders[i]._signTypedData(
+                erc712Domain,
+                erc712Types,
+                msg
+            )
+
+            const {v, r, s} = ethers.utils.splitSignature(rawSignature)
+            sigsV.push(v)
+            sigsR.push(r)
+            sigsS.push(s)
             bids.push(AMOUNT)
             biddersAddrs.push(bidders[i].address)
         }
