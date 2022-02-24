@@ -66,7 +66,9 @@ describe('Timelocked ERC721', () => {
 
         expect(
             await timelockedERC721.hasRole(
-                ethers.utils.keccak256(ethers.utils.toUtf8Bytes('METADATA_UPDATER_ROLE')),
+                ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes('METADATA_UPDATER_ROLE')
+                ),
                 await admin.getAddress()
             )
         )
@@ -112,32 +114,22 @@ describe('Timelocked ERC721', () => {
     })
 
     it('Should be able to update baseURI with metadata updater role', async () => {
-        await timelockedERC721
-                .connect(admin)
-                .updateBaseTokenURI("0x000/")
-        
-        expect(await timelockedERC721.tokenURI(0)).to.equal("0x000/0")
+        await timelockedERC721.connect(admin).updateBaseTokenURI('0x000/')
+
+        expect(await timelockedERC721.tokenURI(0)).to.equal('0x000/0')
     })
 
     it('Should not be able to update baseURI without metadata updater role', async () => {
         await expect(
-            timelockedERC721
-                .connect(users[1])
-                .updateBaseTokenURI("0x000/")
+            timelockedERC721.connect(users[1]).updateBaseTokenURI('0x000/')
         ).to.be.revertedWith("Doesn't have metadata modifier role!")
     })
 
     it('Should not be able to update baseURI with metadata updater role when metadata is locked', async () => {
-        await timelockedERC721
-                .connect(admin)
-                .lockMetadata()
+        await timelockedERC721.connect(admin).lockMetadata()
         await expect(
-            timelockedERC721
-                .connect(admin)
-                .updateBaseTokenURI("0x")
-        ).to.be.revertedWith("Metadata cannot be updated!")
-
-        
+            timelockedERC721.connect(admin).updateBaseTokenURI('0x')
+        ).to.be.revertedWith('Metadata cannot be updated!')
     })
 
     it('Should be able to transfer tokens that have never been locked', async () => {
