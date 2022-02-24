@@ -124,7 +124,7 @@ describe('Timelocked ERC721', () => {
             timelockedERC721
                 .connect(users[1])
                 .updateBaseTokenURI("0x000/")
-        ).to.be.revertedWith("Metadata cannot be updated!")
+        ).to.be.revertedWith("Doesn't have metadata modifier role!")
     })
 
     it('Should not be able to update baseURI with metadata updater role when metadata is locked', async () => {
@@ -136,7 +136,7 @@ describe('Timelocked ERC721', () => {
             timelockedERC721
                 .connect(admin)
                 .updateBaseTokenURI("0x")
-        ).to.be.revertedWith("Doesn't have metadata modifier role!")
+        ).to.be.revertedWith("Metadata cannot be updated!")
 
         
     })

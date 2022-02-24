@@ -62,7 +62,7 @@ contract TimelockedERC721 is
 
     modifier metadataLocked() {
         require(
-            !metadataUpdatable,
+            metadataUpdatable,
             "Metadata cannot be updated!"
         );
         _;
