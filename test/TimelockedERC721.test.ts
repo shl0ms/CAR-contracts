@@ -154,19 +154,6 @@ describe('Timelocked ERC721', () => {
         )
     })
 
-    it('Should be able to transfer tokens that have never been locked', async () => {
-        await timelockedERC721
-            .connect(users[0])
-            .transferFrom(
-                await users[0].getAddress(),
-                await users[1].getAddress(),
-                0
-            )
-        expect(await timelockedERC721.ownerOf(0)).to.equal(
-            await users[1].getAddress()
-        )
-    })
-
     it('Should not be able to transfer locked tokens before unlockTimestamp', async () => {
         await timelockedERC721.connect(users[1]).lockToken(0)
         await expect(
