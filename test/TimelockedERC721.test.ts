@@ -116,7 +116,7 @@ describe('Timelocked ERC721', () => {
                 .connect(admin)
                 .updateBaseTokenURI("0x000/")
         
-        expect(await timelockedERC721.tokenURI(3)).to.equal("0x000/3")
+        expect(await timelockedERC721.tokenURI(0)).to.equal("0x000/0")
     })
 
     it('Should not be able to update baseURI without metadata updater role', async () => {
