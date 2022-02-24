@@ -131,7 +131,6 @@ describe('Timelocked ERC721', () => {
         await timelockedERC721
                 .connect(admin)
                 .lockMetadata()
-        
         await expect(
             timelockedERC721
                 .connect(admin)
