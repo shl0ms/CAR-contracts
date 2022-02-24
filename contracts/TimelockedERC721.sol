@@ -16,10 +16,13 @@ contract TimelockedERC721 is
     ERC721EnumerableUpgradeable
 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant METADATA_MODIFIER_ROLE = keccak256("METADATA_MODIFIER_ROLE");
 
     mapping(uint256 => bool) public lockedTokens;
 
     uint256 public tokenUnlockTimestamp;
+
+    bool public metadataUpdatable = true;
 
     string private _baseTokenURI;
 
@@ -44,8 +47,24 @@ contract TimelockedERC721 is
         _;
     }
 
+    modifier onlyMetadataModifier() {
+        require(
+            hasRole(METADATA_MODIFIER_ROLE, _msgSender()),
+            "Doesn't have metadata modifier role!"
+        );
+        _;
+    }
+
     modifier futureTimestamp(uint256 timestamp_) {
         require(timestamp_ > block.timestamp, "timestamp must be in future!");
+        _;
+    }
+
+    modifier metadataLocked() {
+        require(
+            !metadataUpdatable,
+            "Metadata cannot be updated!"
+        );
         _;
     }
 
@@ -80,6 +99,7 @@ contract TimelockedERC721 is
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(MINTER_ROLE, _msgSender());
+        _setupRole(METADATA_MODIFIER_ROLE, _msgSender());
     }
 
     function setTokenUnlockTimestamp(uint256 timestamp_)
@@ -101,9 +121,18 @@ contract TimelockedERC721 is
         emit MinterAdded(minter_);
     }
 
-    function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
+    function addMetadataModifier(address metadataUpdater_) external onlyAdmin {
+        grantRole(METADATA_MODIFIER_ROLE, metadataUpdater_);
     }
+
+    function updateBaseTokenURI(string memory newBaseTokenURI_) external onlyMetadataModifier metadataLocked {
+        _baseTokenURI = newBaseTokenURI_;
+    }
+
+    function lockMetadata() external onlyMetadataModifier {
+        metadataUpdatable = false;
+    }
+
 
     function lockToken(uint256 tokenId) external {
         require(ownerOf(tokenId) == _msgSender(), "token not owned!");
@@ -122,18 +151,6 @@ contract TimelockedERC721 is
         }
     }
 
-    function _beforeTokenTransfer(
-        address from_,
-        address to_,
-        uint256 tokenId_
-    )
-        internal
-        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
-        tokenLocked(tokenId_)
-    {
-        super._beforeTokenTransfer(from_, to_, tokenId_);
-    }
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -146,5 +163,21 @@ contract TimelockedERC721 is
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(
+        address from_,
+        address to_,
+        uint256 tokenId_
+    )
+        internal
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+        tokenLocked(tokenId_)
+    {
+        super._beforeTokenTransfer(from_, to_, tokenId_);
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
     }
 }
