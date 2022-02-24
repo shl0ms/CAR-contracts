@@ -134,7 +134,7 @@ describe('Timelocked ERC721', () => {
         
         await expect(
             timelockedERC721
-                .connect(admin])
+                .connect(admin)
                 .updateBaseTokenURI("0x")
         ).to.be.revertedWith("Doesn't have metadata modifier role!")
 
