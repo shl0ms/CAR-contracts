@@ -1,4 +1,4 @@
-# Windranger Gasless Auction Contracts
+# $CAR gasless auction and token contracts
 
 
 ## Development Process
