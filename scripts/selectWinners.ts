@@ -46,9 +46,7 @@ async function main() {
             const params = winners[i + j].split('"').join('').split(',')
             bids.push(params[1])
             formattedAmountHashes.push(
-                ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(params[2])
-                )
+                ethers.utils.keccak256(ethers.utils.toUtf8Bytes(params[2]))
             )
             bidders.push(params[3])
             const signature = ethers.utils.splitSignature(params[4])
