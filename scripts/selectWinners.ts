@@ -35,6 +35,7 @@ async function main() {
         const sigsV = []
         const bids = []
         const bidders = []
+        const formattedAmountHashes = []
         for (
             let j = 0;
             j < GROUP_SIZE &&
@@ -44,6 +45,9 @@ async function main() {
         ) {
             const params = winners[i + j].split('"').join('').split(',')
             bids.push(params[1])
+            formattedAmountHashes.push(
+                ethers.utils.keccak256(ethers.utils.toUtf8Bytes(params[2]))
+            )
             bidders.push(params[3])
             const signature = ethers.utils.splitSignature(params[4])
             sigsR.push(signature.r)
@@ -53,6 +57,7 @@ async function main() {
         const tx = await auction.selectWinners(
             bidders,
             bids,
+            formattedAmountHashes,
             sigsR,
             sigsS,
             sigsV,
